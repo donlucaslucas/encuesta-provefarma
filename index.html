@@ -1,0 +1,107 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Encuesta de Satisfacción – Provefarma</title>
+
+  <!-- Hoja de estilos -->
+  <link rel="stylesheet" href="styles.css" />
+
+  <meta name="color-scheme" content="light" />
+  <meta name="description" content="Encuesta de satisfacción Provefarma para evaluar atención de terreno, call center y gestión de despacho." />
+</head>
+
+<body>
+  <main class="container">
+
+    <!-- Banda corporativa -->
+    <div class="brand-bar"></div>
+
+    <!-- Cabecera con el logo Provefarma -->
+    <div class="brand-header" aria-label="Provefarma">
+      <!-- IMPORTANTE: el nombre debe coincidir EXACTO con el archivo: Provefarma_img1.png -->
+      <img src="Provefarma_img1.png" alt="Provefarma" class="logo" />
+    </div>
+
+    <header>
+      <h1>Encuesta de Satisfacción</h1>
+      <p>Tu opinión nos ayuda a mejorar. Gracias por tu tiempo.</p>
+    </header>
+
+    <form id="encuestaForm" novalidate>
+
+      <!-- Pregunta 1 -->
+      <div class="field">
+        <label for="terreno">1. Nota a la atención del vendedor de terreno</label>
+        <select id="terreno" name="terreno" required>
+          <option value="">Selecciona…</option>
+          <option>1</option><option>2</option><option>3</option>
+          <option>4</option><option>5</option><option>6</option><option>7</option>
+        </select>
+        <small class="hint">1 = Muy malo, 7 = Excelente</small>
+      </div>
+
+      <!-- Pregunta 2 -->
+      <div class="field">
+        <label for="callcenter">2. Nota a la atención del vendedor de call center</label>
+        <select id="callcenter" name="callcenter" required>
+          <option value="">Selecciona…</option>
+          <option>1</option><option>2</option><option>3</option>
+          <option>4</option><option>5</option><option>6</option><option>7</option>
+        </select>
+        <small class="hint">1 = Muy malo, 7 = Excelente</small>
+      </div>
+
+      <!-- Pregunta 3 -->
+      <div class="field">
+        <label for="despacho">3. Nota a la gestión de despacho</label>
+        <select id="despacho" name="despacho" required>
+          <option value="">Selecciona…</option>
+          <option>1</option><option>2</option><option>3</option>
+          <option>4</option><option>5</option><option>6</option><option>7</option>
+        </select>
+        <small class="hint">1 = Muy malo, 7 = Excelente</small>
+      </div>
+
+      <!-- Comentarios -->
+      <div class="field">
+        <label for="comentario">4. Comentarios sobre la gestión</label>
+        <textarea id="comentario" name="comentario" rows="4" placeholder="Escribe aquí..."></textarea>
+      </div>
+
+      <!-- RUT de la empresa (B2B) -->
+      <div class="field">
+        <label for="rut">5. RUT de la empresa</label>
+        <input
+          type="text"
+          id="rut"
+          name="rut"
+          inputmode="text"
+          autocomplete="off"
+          placeholder="Ej: 12.345.678-9"
+          required
+          aria-describedby="rutHint"
+          pattern="^\d{1,2}\.?\d{3}\.?\d{3}-?[\dkK]$"
+        />
+        <small id="rutHint" class="hint">
+          Formato sugerido: <strong>12.345.678-9</strong> (también se acepta <strong>12345678-9</strong>). Incluye dígito verificador (<code>0-9</code> o <code>K</code>).
+        </small>
+      </div>
+
+      <button type="submit" class="btn">Enviar respuestas</button>
+      <p id="status" role="status" aria-live="polite"></p>
+    </form>
+
+    <footer>
+      <small>Los datos se utilizarán para mejorar nuestro servicio. No compartimos esta información con terceros.</small>
+    </footer>
+  </main>
+
+  <!-- Lógica de envío -->
+  <script src="script.js"></script>
+</body>
+</html>
+
+
