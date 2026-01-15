@@ -1,21 +1,12 @@
-
-// === Configuración ===
-// Actualizado con tu nueva ID de implementación
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbx3fdCKRqHQcqykPniodiWCOsjTDmPKxEZnQV3jRtkL-Raiq2TM1tN9Rx7ZbsAUMvohBw/exec';
+const ALLOWED_ORIGIN = 'https://encuestasonlineweb.github.io';
 
-// El origen que el backend validará (debe coincidir con la configuración del Code.gs)
-const ALLOWED_ORIGIN = 'https://encuestasonlineweb.github.io'; 
-
-// === Referencias DOM ===
 const form = document.getElementById('encuestaForm');
 const statusEl = document.getElementById('status');
 const rutInput = document.getElementById('rut');
-const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
 
-// === Utilidades RUT ===
-function cleanRut(rut) {
-  return (rut || '').replace(/[^0-9kK]/g, '').toUpperCase();
-}
+// --- Utilidades de RUT ---
+function cleanRut(rut) { return (rut || '').replace(/[^0-9kK]/g, '').toUpperCase(); }
 
 function formatRut(rut) {
   rut = cleanRut(rut);
@@ -23,28 +14,11 @@ function formatRut(rut) {
   const cuerpo = rut.slice(0, -1);
   const dv = rut.slice(-1);
   let out = '';
-  let count = 0;
-  for (let i = cuerpo.length - 1; i >= 0; i--) {
+  for (let i = cuerpo.length - 1, count = 0; i >= 0; i--, count++) {
+    if (count === 3) { out = '.' + out; count = 0; }
     out = cuerpo[i] + out;
-    count++;
-    if (count === 3 && i !== 0) {
-      out = '.' + out;
-      count = 0;
-    }
   }
   return `${out}-${dv}`;
-}
-
-function dvRut(cuerpo) {
-  let suma = 0, multiplo = 2;
-  for (let i = cuerpo.length - 1; i >= 0; i--) {
-    suma += parseInt(cuerpo[i], 10) * multiplo;
-    multiplo = multiplo === 7 ? 2 : multiplo + 1;
-  }
-  const res = 11 - (suma % 11);
-  if (res === 11) return '0';
-  if (res === 10) return 'K';
-  return String(res);
 }
 
 function isValidRut(rut) {
@@ -52,105 +26,72 @@ function isValidRut(rut) {
   if (rut.length < 2) return false;
   const cuerpo = rut.slice(0, -1);
   const dv = rut.slice(-1).toUpperCase();
-  if (!/^\d+$/.test(cuerpo)) return false;
-  return dvRut(cuerpo) === dv;
+  let suma = 0, multi = 2;
+  for (let i = cuerpo.length - 1; i >= 0; i--) {
+    suma += parseInt(cuerpo[i]) * multi;
+    multi = multi === 7 ? 2 : multi + 1;
+  }
+  const esperado = 11 - (suma % 11);
+  const dvEsperado = esperado === 11 ? '0' : esperado === 10 ? 'K' : String(esperado);
+  return dv === dvEsperado;
 }
 
-// === Helpers UI ===
-function setStatus(msg, isError = false) {
-  if (!statusEl) return;
-  statusEl.textContent = msg || '';
-  statusEl.style.color = isError ? '#cc1f1a' : '#0b6e4f';
-}
+// --- Eventos ---
+rutInput.addEventListener('input', (e) => {
+  const pos = e.target.selectionStart;
+  const val = e.target.value;
+  e.target.value = formatRut(val);
+  e.target.classList.remove('is-invalid');
+});
 
-function disableSubmit(disabled) {
-  if (submitBtn) submitBtn.disabled = disabled;
-}
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  statusEl.textContent = 'Enviando...';
+  statusEl.style.color = 'var(--text)';
+  
+  const btn = form.querySelector('button');
+  btn.disabled = true;
 
-// === Formateo del RUT mientras se escribe ===
-if (rutInput) {
-  rutInput.addEventListener('input', () => {
-    const before = rutInput.value;
-    const pos = rutInput.selectionStart;
-    const formatted = formatRut(before);
-    rutInput.value = formatted;
-    rutInput.classList.remove('is-invalid');
-    setStatus('');
-    try {
-      const delta = formatted.length - before.length;
-      const newPos = Math.max(0, (pos || 0) + delta);
-      rutInput.setSelectionRange(newPos, newPos);
-    } catch (_) {}
-  });
-}
+  const rutVal = rutInput.value;
+  if (!isValidRut(rutVal)) {
+    statusEl.textContent = 'RUT inválido. Verifique el formato.';
+    statusEl.style.color = 'var(--error)';
+    rutInput.classList.add('is-invalid');
+    btn.disabled = false;
+    return;
+  }
 
-// === Envío del formulario ===
-if (form) {
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    setStatus('Enviando…');
-    disableSubmit(true);
+  const payload = {
+    terreno: document.getElementById('terreno').value,
+    callcenter: document.getElementById('callcenter').value,
+    despacho: document.getElementById('despacho').value,
+    comentario: document.getElementById('comentario').value,
+    rut: cleanRut(rutVal),
+    rut_formateado: rutVal,
+    origin: ALLOWED_ORIGIN,
+    userAgent: navigator.userAgent
+  };
 
-    // Notas
-    const terreno = document.getElementById('terreno')?.value || '';
-    const callcenter = document.getElementById('callcenter')?.value || '';
-    const despacho = document.getElementById('despacho')?.value || '';
-    const comentario = document.getElementById('comentario')?.value.trim() || '';
+  try {
+    // Enviamos como text/plain para evitar errores de CORS preflight
+    await fetch(GAS_URL, {
+      method: 'POST',
+      mode: 'no-cors', 
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload)
+    });
 
-    if (!terreno || !callcenter || !despacho) {
-      setStatus('Por favor, completa todas las notas (1 a 7).', true);
-      disableSubmit(false);
-      return;
-    }
-
-    // Validación RUT
-    const rutVal = rutInput ? rutInput.value : '';
-    if (!isValidRut(rutVal)) {
-      if (rutInput) {
-        rutInput.classList.add('is-invalid');
-        rutInput.focus();
-      }
-      setStatus('RUT inválido. Revisa el dígito verificador.', true);
-      disableSubmit(false);
-      return;
-    }
-
-    // Payload para el Backend
-    const payload = {
-      terreno,
-      callcenter,
-      despacho,
-      comentario,
-      rut: cleanRut(rutVal),
-      rut_formateado: formatRut(rutVal),
-      origin: ALLOWED_ORIGIN, 
-      userAgent: navigator.userAgent || ''
-    };
-
-    try {
-      const res = await fetch(GAS_URL, {
-        method: 'POST',
-        mode: 'no-cors', // Importante para evitar problemas de CORS en algunos navegadores
-        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
-        body: JSON.stringify(payload)
-      });
-
-      // Nota: Con 'no-cors', no podemos leer la respuesta JSON directamente.
-      // Pero si la petición llega al script de Google, se ejecutará.
-      // Para confirmar éxito, solemos asumir que si no hay error de red, se envió.
-      
-      setStatus('¡Gracias! Tus respuestas fueron registradas.');
-      form.reset();
-      if (rutInput) rutInput.classList.remove('is-invalid');
-
-    } catch (err) {
-      console.error(err);
-      setStatus('Ocurrió un error de red. Intenta nuevamente.', true);
-    } finally {
-      disableSubmit(false);
-    }
-  });
-}
+    // Con no-cors no podemos leer la respuesta, pero si llega aquí sin error de red, usualmente es éxito
+    statusEl.textContent = '¡Gracias! Tus respuestas fueron registradas.';
+    statusEl.style.color = 'var(--success)';
+    form.reset();
+  } catch (err) {
+    statusEl.textContent = 'Error de conexión. Intente más tarde.';
+    statusEl.style.color = 'var(--error)';
+  } finally {
+    btn.disabled = false;
+  }
+});
 
 
 
