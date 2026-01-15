@@ -1,7 +1,7 @@
 
 // === Configuración ===
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbxWs2psT6STx9F5sUPgIicUqYvPqypVEJLWn_4GEhUfMGmc5E7cTted7jMzLYuqMuHncg/exec';
-const ALLOWED_ORIGIN = 'https://encuestasonlineweb.github.io'; // dominio base de tu GitHub Pages
+const ALLOWED_ORIGIN = 'https://script.google.com/macros/s/AKfycbxkNM0-FGGbzqFwUlLVn7h8q4UsrdQo7rZJH4f5cf2-C8NqF8ifa9FPuG2HHlSn1Bf-yA/exec'; // dominio base de tu GitHub Pages
 
 // === Referencias DOM ===
 const form = document.getElementById('encuestaForm');
@@ -167,5 +167,6 @@ if (form) {
   });
 }
 ``
+
 
 
