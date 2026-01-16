@@ -1,3 +1,4 @@
+// URL de tu Web App (Verifica que sea la que termina en ...9_cjg/exec)
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbz1nofMJ95SIA9TLS1937DTfR5b0MJCZmx0KEwEIOl11povNbyDtuwbPTT35bYOY9_cjg/exec';
 const ALLOWED_ORIGIN = 'https://encuestasonlineweb.github.io';
 
@@ -36,64 +37,68 @@ function isValidRut(rut) {
   return dv === dvEsperado;
 }
 
-// --- Eventos ---
-rutInput.addEventListener('input', (e) => {
-  const pos = e.target.selectionStart;
-  const val = e.target.value;
-  e.target.value = formatRut(val);
-  e.target.classList.remove('is-invalid');
-});
+// --- Eventos de Interfaz ---
+if (rutInput) {
+  rutInput.addEventListener('input', (e) => {
+    e.target.value = formatRut(e.target.value);
+    e.target.classList.remove('is-invalid');
+  });
+}
 
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  statusEl.textContent = 'Enviando...';
-  statusEl.style.color = 'var(--text)';
-  
-  const btn = form.querySelector('button');
-  btn.disabled = true;
+if (form) {
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    // Validaciones previas
+    const rutVal = rutInput.value;
+    if (!isValidRut(rutVal)) {
+      statusEl.textContent = 'RUT inválido. Verifique el dígito verificador.';
+      statusEl.style.color = '#cc1f1a';
+      rutInput.classList.add('is-invalid');
+      return;
+    }
 
-  const rutVal = rutInput.value;
-  if (!isValidRut(rutVal)) {
-    statusEl.textContent = 'RUT inválido. Verifique el formato.';
-    statusEl.style.color = 'var(--error)';
-    rutInput.classList.add('is-invalid');
-    btn.disabled = false;
-    return;
-  }
+    statusEl.textContent = 'Enviando respuestas...';
+    statusEl.style.color = '#233044';
+    const btn = form.querySelector('button');
+    btn.disabled = true;
 
-  const payload = {
-    terreno: document.getElementById('terreno').value,
-    callcenter: document.getElementById('callcenter').value,
-    despacho: document.getElementById('despacho').value,
-    comentario: document.getElementById('comentario').value,
-    rut: cleanRut(rutVal),
-    rut_formateado: rutVal,
-    origin: ALLOWED_ORIGIN,
-    userAgent: navigator.userAgent
-  };
+    // Preparamos el objeto de datos
+    const payload = {
+      terreno: document.getElementById('terreno').value,
+      callcenter: document.getElementById('callcenter').value,
+      despacho: document.getElementById('despacho').value,
+      comentario: document.getElementById('comentario').value,
+      rut: cleanRut(rutVal),
+      rut_formateado: rutVal,
+      origin: ALLOWED_ORIGIN,
+      userAgent: navigator.userAgent
+    };
 
-  try {
-    // Enviamos como text/plain para evitar errores de CORS preflight
-    await fetch(GAS_URL, {
-      method: 'POST',
-      mode: 'no-cors', 
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(payload)
-    });
+    try {
+      // Usamos 'text/plain' para evitar problemas de CORS con Google Apps Script
+      await fetch(GAS_URL, {
+        method: 'POST',
+        mode: 'no-cors', // Importante para Google Apps Script
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(payload)
+      });
 
-    // Con no-cors no podemos leer la respuesta, pero si llega aquí sin error de red, usualmente es éxito
-    statusEl.textContent = '¡Gracias! Tus respuestas fueron registradas.';
-    statusEl.style.color = 'var(--success)';
-    form.reset();
-  } catch (err) {
-    statusEl.textContent = 'Error de conexión. Intente más tarde.';
-    statusEl.style.color = 'var(--error)';
-  } finally {
-    btn.disabled = false;
-  }
-});
-
-
+      // Como usamos no-cors, no podemos leer la respuesta, pero si llega aquí
+      // es que el navegador logró enviar el paquete.
+      statusEl.textContent = '¡Gracias! Tus respuestas fueron registradas.';
+      statusEl.style.color = '#0b6e4f';
+      form.reset();
+      rutInput.classList.remove('is-invalid');
+    } catch (err) {
+      console.error(err);
+      statusEl.textContent = 'Error de conexión. Intente nuevamente.';
+      statusEl.style.color = '#cc1f1a';
+    } finally {
+      btn.disabled = false;
+    }
+  });
+}
 
 
 
