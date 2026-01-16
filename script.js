@@ -1,5 +1,7 @@
 // URL de tu Web App (Verifica que sea la que termina en ...9_cjg/exec)
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbz1nofMJ95SIA9TLS1937DTfR5b0MJCZmx0KEwEIOl11povNbyDtuwbPTT35bYOY9_cjg/exec';
+
+
 const ALLOWED_ORIGIN = 'https://encuestasonlineweb.github.io';
 
 const form = document.getElementById('encuestaForm');
@@ -99,6 +101,7 @@ if (form) {
     }
   });
 }
+
 
 
 
